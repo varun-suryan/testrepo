@@ -1,4 +1,6 @@
 # testrepo
+clear all;
+
 function [J] =means(I,K)
 I=im2double(I);
 R=I(:,:,1);
@@ -24,4 +26,3 @@ end
 f=J(:,:,:);
 imshow(J);
 end
-
