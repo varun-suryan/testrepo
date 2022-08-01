@@ -6,4 +6,6 @@ add_executable(${PROJECT_NAME} main.cpp)
 
 add_subdirectory(square)
 
-target_link_libraries(${PROJECT_NAME} code)
+add_subdirectory(external/glfw)
+
+target_link_libraries(${PROJECT_NAME} code glfw)
