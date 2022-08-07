@@ -1,30 +1,45 @@
 #include <iostream>
-#include "square/code.h"
-#include "GLFW/glfw3.h"
+#include <map>
+#include <vector>
 using namespace std;
 
-int main()
-{
-	cout << "Hello, what's up?";
-	cout << second::square(3, 2);
-	GLFWwindow *window;
-    if( !glfwInit() )
+class Solution {
+public:
+    
+    vector<int> res;
+    vector<vector<int>> matrix;
+    map<pair<int, int>, bool> visited;
+    map<pair<int, int>, pair<int, int>> mapping_;
+    
+    void fn(int i, int j, int dir_x, int dir_y)
     {
-        fprintf( stderr, "Failed to initialize GLFW\n" );
-        exit( EXIT_FAILURE );
+    
+        if(visited.find({i, j})!=visited.end()) return;
+        
+        res.push_back(matrix[i][j]);
+        
+        while(-1 < i+dir_x and i+dir_x < matrix.size() and -1 < j+dir_y and j+dir_y < matrix[0].size() and visited.find({i+dir_x, j+dir_y})==visited.end()){
+            res.push_back(matrix[i+dir_x][j+dir_y]);
+            i += dir_x;
+            j += dir_y;
+        }
+        
+        dir_x = mapping_[{dir_x, dir_y}].first;
+        dir_y = mapping_[{dir_x, dir_y}].second;
+        fn(i+dir_x, j+dir_y, dir_x, dir_y);
     }
-    window = glfwCreateWindow(300, 300, "Gears", NULL, NULL);
-    // Main loop
-    while( !glfwWindowShouldClose(window) )
-    {
-        // Swap buffers
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+    
+    vector<int> spiralOrder(vector<vector<int>>& matrix) {
+        fn(0, 0, 0, 1);
+        cout << res[0];
+        return res;
     }
+};
 
-    // Terminate GLFW
-    glfwTerminate();
+int main(){
 
-
-    return 0;
+Solution sol;
+vector<vector<int>> input = {{1, 2}, {3, 4}};
+vector<int> ans = sol.spiralOrder(input);
+cout << ans[0];
 }
