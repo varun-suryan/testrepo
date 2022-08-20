@@ -2,7 +2,7 @@
 
 namespace first{
     int square(int n, int m) {
-        return n*n;
+        return n*m;
     }
 }
 
