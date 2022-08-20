@@ -1,45 +1,33 @@
-#include <iostream>
-#include <map>
-#include <vector>
-using namespace std;
+    for(const auto &[id, fixedB] : _satelliteData->fixedTxBeams()){
+        
+        // Compute the input beam ID.
+        int64_t inputBeam = fixedB->beamID();
 
-class Solution {
-public:
-    
-    vector<int> res;
-    vector<vector<int>> matrix;
-    map<pair<int, int>, bool> visited;
-    map<pair<int, int>, pair<int, int>> mapping_;
-    
-    void fn(int i, int j, int dir_x, int dir_y)
-    {
-    
-        if(visited.find({i, j})!=visited.end()) return;
+        // Find if we have spectrum instances for the uplink groups.
+        auto fnd = uplinkGroups.find(inputBeam);
         
-        res.push_back(matrix[i][j]);
-        
-        while(-1 < i+dir_x and i+dir_x < matrix.size() and -1 < j+dir_y and j+dir_y < matrix[0].size() and visited.find({i+dir_x, j+dir_y})==visited.end()){
-            res.push_back(matrix[i+dir_x][j+dir_y]);
-            i += dir_x;
-            j += dir_y;
+        if(fnd == uplinkGroups.end()){
+            // No active beam?
+            LOGGER_DEBUG(logger) << "Unable to route capacity from " << inputBeam << "; no spectrum instances...";
+            continue;
         }
+
+        // Compute the spectrum instances that survive the payload route.
+        std::vector<SpectrumInstance> outputGroup = computeTransfer(*rt, fnd->second, satState);
+
+        qDebug() << "Converted " << fnd->second.size() << " uplink signals into " << outputGroup.size() << " downlink";
         
-        dir_x = mapping_[{dir_x, dir_y}].first;
-        dir_y = mapping_[{dir_x, dir_y}].second;
-        fn(i+dir_x, j+dir_y, dir_x, dir_y);
-    }
-    
-    vector<int> spiralOrder(vector<vector<int>>& matrix) {
-        fn(0, 0, 0, 1);
-        cout << res[0];
-        return res;
-    }
-};
+        // Blend with the output groups we're building.
+        auto outFnd = downlinkAmpInputGroups.find(rt->outputBeamId);
 
-int main(){
-
-Solution sol;
-vector<vector<int>> input = {{1, 2}, {3, 4}};
-vector<int> ans = sol.spiralOrder(input);
-cout << ans[0];
-}
+        if(outFnd == downlinkAmpInputGroups.end()){
+            // Stick this vector into the downlink groups.
+            downlinkAmpInputGroups.insert_or_assign(rt->outputBeamId, outputGroup);
+        }
+        else{
+            // Blend the spectrums together.
+            for(const auto &si : outputGroup){
+                outFnd->second.push_back(si);
+            }
+        }
+    }
